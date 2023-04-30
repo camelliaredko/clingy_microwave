@@ -25,6 +25,13 @@ int condClose = 0;
 const int servoMinAngle = 3;   // Servo minAngle
 const int servoMaxAngle = 87;  // Servo maxAngle
 
+unsigned long previousMillisServo = 0;
+unsigned long previousMillisBuzzer = 0;
+unsigned long previousMillisRing = 0;
+const long intervalServo = 500;
+const long intervalBuzzer = 570; // 250 + 300 + 20
+const long intervalRing = 1000;
+
 Bounce button1 = Bounce();  // Instantiate a Bounce object
 
 void setup() {
@@ -60,9 +67,11 @@ void loop() {
     if (distance <= 50 || condClose == 1) {
 
     } else {
-      playDescendingNotes();
-      moveServoBackAndForth(servoMinAngle, servoMaxAngle, 1000);
-      ringBlinkRed();
+      unsigned long currentMillis = millis();
+
+      playDescendingNotes(currentMillis);
+      moveServoBackAndForth(servoMinAngle, servoMaxAngle, currentMillis);
+      ringBlinkRed(currentMillis);
     }
 
     if (button1.fell()) {  // Call code if button transitions from HIGH to LOW
@@ -72,49 +81,42 @@ void loop() {
   }
 }
 
-    void ringBlinkRed() {
+void ringBlinkRed(unsigned long currentMillis) {
+  if (currentMillis - previousMillisRing >= intervalRing) {
+    previousMillisRing = currentMillis;
+    static bool ringState = false;
+    if (ringState) {
       neoPixelRing.clear();
+    } else {
       neoPixelRing.fill(neoPixelRing.Color(255, 0, 0));  // Red color
-      neoPixelRing.show();
-      delay(500);  // Adjust delay between on and off as needed
-      neoPixelRing.clear();
-      neoPixelRing.show();
-      delay(500);  // Adjust delay between on and off as needed
     }
+    neoPixelRing.show();
+    ringState = !ringState;
+  }
+}
 
-
-    void moveServoBackAndForth(int minAngle, int maxAngle, int interval) {
-        servoMotor.write(minAngle); // Move to min angle instantly
-      delay(interval);  // Wait for specified interval
-        servoMotor.write(maxAngle); // Move to max angle instantly
-      delay(interval);  // Wait for specified interval
+void moveServoBackAndForth(int minAngle, int maxAngle, unsigned long currentMillis) {
+  if (currentMillis - previousMillisServo >= intervalServo) {
+    previousMillisServo = currentMillis;
+    static bool servoState = false;
+    if (servoState) {
+      servoMotor.write(minAngle);
+    } else {
+      servoMotor.write(maxAngle);
     }
+    servoState = !servoState;
+  }
+}
 
-    // void moveServoBackAndForth(int minAngle, int maxAngle, int interval) {
-    //   // Move to maxAngle
-    //   for (int angle = minAngle; angle <= maxAngle; angle++) {
-    //     servoMotor.write(angle);
-    //     delay(10);  // Adjust delay between each angle step as needed
-    //   }
-
-    //   delay(interval);  // Wait for specified interval
-
-    //   // Move to minAngle
-    //   for (int angle = maxAngle; angle >= minAngle; angle--) {
-    //     servoMotor.write(angle);
-    //     delay(10);  // Adjust delay between each angle step as needed
-    //   }
-    //   delay(interval);  // Wait for specified interval
-    // }
-
-
-    // Play descending tones quietly
-    void playDescendingNotes() {
-      for (int frequency = 1000; frequency >= 200; frequency -= 100) {
-        analogWrite(BUZZER_PIN, 1);        // Set buzzer volume to a low value (adjust as needed)
-        tone(BUZZER_PIN, frequency, 250);  // Play the tone for 250 milliseconds
-        delay(300);                        // Delay between each tone
-        noTone(BUZZER_PIN);                // Stop the tone
-        delay(20);                         // Delay between each tone to reduce overlap
-      }
+void playDescendingNotes(unsigned long currentMillis) {
+  if (currentMillis - previousMillisBuzzer >= intervalBuzzer) {
+    previousMillisBuzzer = currentMillis;
+    static int frequency = 1000;
+    analogWrite(BUZZER_PIN, 1);        // Set buzzer volume to a low value (adjust as needed)
+    tone(BUZZER_PIN, frequency, 250);  // Play the tone for 250 milliseconds
+    frequency -= 100;
+    if (frequency < 200) {
+      frequency = 1000;
     }
+  }
+}
