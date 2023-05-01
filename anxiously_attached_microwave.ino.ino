@@ -6,9 +6,6 @@
 // https://github.com/thomasfredericks/Bounce2
 #include <Bounce2.h>
 
-// Include FastLED library by Daniel Garcia
-#include <FastLED.h>
-
 #define TRIGGER_PIN 2
 #define ECHO_PIN 3
 #define BUTTON_PIN 4
@@ -37,6 +34,8 @@ void setup() {
   pinMode(BUZZER_PIN, OUTPUT);
   servoMotor.attach(SERVO_PIN);
   neoPixelRing.begin();
+  neoPixelRing.setBrightness(32);  // Set dim brightness
+  neoPixelRing.show();
 }
 
 void loop() {
@@ -50,23 +49,27 @@ void loop() {
   duration = pulseIn(ECHO_PIN, HIGH);
   distance = (duration / 2) * 0.0344;
 
-  // Serial.print("distance: ");
-  // Serial.print(distance);
-  // Serial.println(" cm");
-
-  button1.update();  // Update the Bounce instance
-
-  if (buttonPressCount < 10) {
     if (distance <= 50 || condClose == 1) {
-
+      condClose = 1;
+      if (buttonPressCount == 0) {
+      tenseMicrowave();
+      }
+      else if (buttonPressCount > 0 && buttonPressCount < 10) {
+      //calmerMicrowave();
+      }
+      else {
+      //happyMicrowave();
+      }
     } else {
       distressedMicrowave();
     }
+}
 
-    if (button1.fell()) {  // Call code if button transitions from HIGH to LOW
-      buttonPressCount++;
-      //  Serial.println(buttonPressCount); // Tests button presses
-    }
+void updateButtonPressCount() {
+  button1.update();
+  if (button1.fell()) {
+    buttonPressCount++;
+    Serial.println(buttonPressCount);
   }
 }
 
@@ -93,6 +96,7 @@ void distressedMicrowave() {
         servoMotor.write(servoMinAngle);
       }
     }
+    updateButtonPressCount(); // Add this line to update button press count
   }
   noTone(BUZZER_PIN);
   ringBlinkRed();
@@ -103,3 +107,102 @@ void distressedMicrowave() {
     servoMotor.write(servoMinAngle);
   }
 }
+
+
+void tenseMicrowave() {
+  const int servoIntermediateAngle = 10;
+  int colorIndex = 0;
+  const uint32_t colors[] = {
+    neoPixelRing.Color(8, 0, 0),  // Dim red
+    neoPixelRing.Color(0, 8, 0),  // Dim green
+    neoPixelRing.Color(0, 0, 8),  // Dim blue
+    neoPixelRing.Color(8, 8, 0),  // Dim yellow
+    neoPixelRing.Color(0, 8, 8),  // Dim cyan
+    neoPixelRing.Color(8, 0, 8),  // Dim magenta
+  };
+  const int numColors = sizeof(colors) / sizeof(colors[0]);
+
+  unsigned long previousMillis = millis();
+  int pixelDelay = 5;
+  int colorDelay = 250;
+
+  for (int i = 0; i < numColors * 2; i++) {
+    uint32_t currentColor = colors[colorIndex];
+
+    for (int j = 0; j < NUM_PIXELS; j++) {
+      neoPixelRing.setPixelColor(j, currentColor);
+      neoPixelRing.show();
+
+      while (millis() - previousMillis < pixelDelay) {
+        updateButtonPressCount();
+      }
+      previousMillis = millis();
+    }
+
+    if (colorIndex == 0) {  // Bright red color
+      neoPixelRing.clear();
+      neoPixelRing.fill(neoPixelRing.Color(255, 0, 0));
+      neoPixelRing.show();
+      tone(BUZZER_PIN, 1000, 250);  // Play the tone for 250 milliseconds
+      servoMotor.write(servoMaxAngle);
+      delay(1000);
+      servoMotor.write(servoMinAngle);
+    } else {
+      noTone(BUZZER_PIN);
+      servoMotor.write(servoIntermediateAngle);
+    }
+
+    colorIndex = (colorIndex + 1) % numColors;
+
+    while (millis() - previousMillis < colorDelay) {
+      updateButtonPressCount();
+    }
+    previousMillis = millis();
+  }
+}
+
+
+
+
+
+/* Version of tenseMicrowave() that does not work with updateButtonPressCount();
+void tenseMicrowave() {
+  const int servoIntermediateAngle = 10;
+  int colorIndex = 0;
+  const uint32_t colors[] = {
+    neoPixelRing.Color(8, 0, 0),  // Dim red
+    neoPixelRing.Color(0, 8, 0),  // Dim green
+    neoPixelRing.Color(0, 0, 8),  // Dim blue
+    neoPixelRing.Color(8, 8, 0),  // Dim yellow
+    neoPixelRing.Color(0, 8, 8),  // Dim cyan
+    neoPixelRing.Color(8, 0, 8),  // Dim magenta
+  };
+  const int numColors = sizeof(colors) / sizeof(colors[0]);
+
+  for (int i = 0; i < numColors * 2; i++) {
+    uint32_t currentColor = colors[colorIndex];
+    for (int j = 0; j < NUM_PIXELS; j++) {
+      neoPixelRing.setPixelColor(j, currentColor);
+      neoPixelRing.show();
+      delay(5);  // Adjust delay between pixels as needed (reduced to 10ms)
+    }
+
+    if (colorIndex == 0) {  // Bright red color
+      neoPixelRing.clear();
+      neoPixelRing.fill(neoPixelRing.Color(255, 0, 0));
+      neoPixelRing.show();
+      tone(BUZZER_PIN, 1000, 250);  // Play the tone for 250 milliseconds
+      servoMotor.write(servoMaxAngle);
+      delay(1000);
+      servoMotor.write(servoMinAngle);
+    } else {
+      noTone(BUZZER_PIN);
+      servoMotor.write(servoIntermediateAngle);
+    }
+
+    colorIndex = (colorIndex + 1) % numColors;
+    delay(250);  // Adjust delay between colors as needed (reduced to 250ms)
+    updateButtonPressCount(); // Add this line to update button press count
+  }
+}
+*/
