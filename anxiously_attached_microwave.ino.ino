@@ -1,9 +1,6 @@
 #include <Arduino.h>
 #include <Servo.h>
 #include <Adafruit_NeoPixel.h>
-
-// Include the Bounce2 library found here :
-// https://github.com/thomasfredericks/Bounce2
 #include <Bounce2.h>
 
 #define TRIGGER_PIN 2
@@ -55,7 +52,7 @@ void loop() {
       tenseMicrowave();
       }
       else if (buttonPressCount > 0 && buttonPressCount < 10) {
-      //calmerMicrowave();
+      calmerMicrowave();
       }
       else {
       //happyMicrowave();
@@ -161,48 +158,44 @@ void tenseMicrowave() {
   }
 }
 
+void calmerMicrowave() {
+  noTone(BUZZER_PIN);  // Buzzer is silent
 
+  // Servo motor behavior
+  int initialAngle = 27;
+  int angleIncrease = 6;
 
+  // NeoPixel Ring behavior
+  uint32_t pinkColor = neoPixelRing.Color(255, 20, 147);
+  unsigned long breathingStartTime = millis();
+  unsigned long previousMillis = millis();
 
+  while (millis() - breathingStartTime < 19000) {  // 4s + 7s + 8s = 19s
+    unsigned long currentMillis = millis();
+    unsigned long elapsedTime = currentMillis - breathingStartTime;
+    uint8_t brightness;
 
-/* Version of tenseMicrowave() that does not work with updateButtonPressCount();
-void tenseMicrowave() {
-  const int servoIntermediateAngle = 10;
-  int colorIndex = 0;
-  const uint32_t colors[] = {
-    neoPixelRing.Color(8, 0, 0),  // Dim red
-    neoPixelRing.Color(0, 8, 0),  // Dim green
-    neoPixelRing.Color(0, 0, 8),  // Dim blue
-    neoPixelRing.Color(8, 8, 0),  // Dim yellow
-    neoPixelRing.Color(0, 8, 8),  // Dim cyan
-    neoPixelRing.Color(8, 0, 8),  // Dim magenta
-  };
-  const int numColors = sizeof(colors) / sizeof(colors[0]);
-
-  for (int i = 0; i < numColors * 2; i++) {
-    uint32_t currentColor = colors[colorIndex];
-    for (int j = 0; j < NUM_PIXELS; j++) {
-      neoPixelRing.setPixelColor(j, currentColor);
-      neoPixelRing.show();
-      delay(5);  // Adjust delay between pixels as needed (reduced to 10ms)
-    }
-
-    if (colorIndex == 0) {  // Bright red color
-      neoPixelRing.clear();
-      neoPixelRing.fill(neoPixelRing.Color(255, 0, 0));
-      neoPixelRing.show();
-      tone(BUZZER_PIN, 1000, 250);  // Play the tone for 250 milliseconds
-      servoMotor.write(servoMaxAngle);
-      delay(1000);
-      servoMotor.write(servoMinAngle);
+    if (elapsedTime < 4000) {
+      brightness = map(elapsedTime, 0, 4000, 0, 255);
+    } else if (elapsedTime < 11000) {
+      brightness = 255;
     } else {
-      noTone(BUZZER_PIN);
-      servoMotor.write(servoIntermediateAngle);
+      brightness = map(elapsedTime, 11000, 19000, 255, 0);
     }
 
-    colorIndex = (colorIndex + 1) % numColors;
-    delay(250);  // Adjust delay between colors as needed (reduced to 250ms)
-    updateButtonPressCount(); // Add this line to update button press count
+    neoPixelRing.setBrightness(brightness);
+    neoPixelRing.fill(pinkColor);
+    neoPixelRing.show();
+
+    // Update servo angle and button press count every 100ms
+    if (currentMillis - previousMillis >= 100) {
+      previousMillis = currentMillis;
+      updateButtonPressCount();
+
+      // Update servo angle based on button presses
+      int targetAngle = initialAngle + buttonPressCount * angleIncrease;
+      targetAngle = constrain(targetAngle, servoMinAngle, servoMaxAngle);
+      servoMotor.write(targetAngle);
+    }
   }
 }
-*/
