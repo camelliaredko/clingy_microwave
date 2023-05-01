@@ -49,13 +49,14 @@ void loop() {
     if (distance <= 50 || condClose == 1) {
       condClose = 1;
       if (buttonPressCount == 0) {
-      tenseMicrowave();
+      happyMicrowave();
+      //tenseMicrowave();
       }
       else if (buttonPressCount > 0 && buttonPressCount < 10) {
       calmerMicrowave();
       }
       else {
-      //happyMicrowave();
+      happyMicrowave();
       }
     } else {
       distressedMicrowave();
@@ -197,5 +198,61 @@ void calmerMicrowave() {
       targetAngle = constrain(targetAngle, servoMinAngle, servoMaxAngle);
       servoMotor.write(targetAngle);
     }
+  }
+}
+
+void happyMicrowave() {
+  // Servo motor behavior
+  servoMotor.write(87);
+
+// Buzzer behavior
+int melody[] = {
+  294, 220, 247, 220,  // D4, A3, B3, A3
+  294, 220, 247, 220,  // D4, A3, B3, A3
+};
+
+int noteDurations[] = {
+  2, 8, 8, 8,  // quarter, quarter, quarter, quarter
+  2, 8, 8, 8,  // quarter, quarter, quarter, quarter
+};
+
+for (int i = 0; i < sizeof(melody) / sizeof(melody[0]); i++) {
+  int noteDuration = 1000 / noteDurations[i];
+  tone(BUZZER_PIN, melody[i], noteDuration);
+
+  // Add a pause between the fourth and fifth notes
+  if (i == 3) {
+    delay(noteDuration * 4);  // Quadruple the pause length between the fourth and fifth notes
+  } else {
+    delay(noteDuration * 1.3);  // Regular pause length for the other notes
+  }
+}
+noTone(BUZZER_PIN);
+
+  // Ascending buzzer notes
+  // for (int i = 1000; i < 5000; i += 100) {
+  //   tone(BUZZER_PIN, i);
+  //   delay(50);
+  // }
+  // noTone(BUZZER_PIN);
+
+  // NeoPixel Ring behavior
+  const uint32_t orangeColor = neoPixelRing.Color(255, 40, 0);
+  const uint32_t yellowColor = neoPixelRing.Color(255, 100, 0);
+  unsigned long previousMillis = millis();
+  uint32_t currentColor = orangeColor;
+
+  while (true) { // Run indefinitely
+    unsigned long currentMillis = millis();
+    if (currentMillis - previousMillis >= 1000) {
+      previousMillis = currentMillis;
+      currentColor = (currentColor == orangeColor) ? yellowColor : orangeColor;
+
+      neoPixelRing.fill(currentColor);
+      neoPixelRing.setBrightness(255);
+      neoPixelRing.show();
+    }
+
+    updateButtonPressCount();
   }
 }
