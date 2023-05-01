@@ -46,20 +46,21 @@ void loop() {
   duration = pulseIn(ECHO_PIN, HIGH);
   distance = (duration / 2) * 0.0344;
 
-    if (distance <= 50 || condClose == 1) {
-      condClose = 1;
-      if (buttonPressCount == 0) {
+  if (distance <= 50 || condClose == 1) {
+    condClose = 1;
+    if (buttonPressCount == 0) {
       tenseMicrowave();
-      }
-      else if (buttonPressCount > 0 && buttonPressCount < 10) {
+      return;  // Return from the function immediately
+    } else if (buttonPressCount > 0 && buttonPressCount < 10) {
       calmerMicrowave();
-      }
-      else {
-      happyMicrowave();
-      }
+      return;  // Return from the function immediately
     } else {
-      distressedMicrowave();
+      happyMicrowave();
+      return;  // Return from the function immediately
     }
+  } else {
+    distressedMicrowave();
+  }
 }
 
 void updateButtonPressCount() {
@@ -93,7 +94,7 @@ void distressedMicrowave() {
         servoMotor.write(servoMinAngle);
       }
     }
-    updateButtonPressCount(); // Add this line to update button press count
+    updateButtonPressCount();  // Add this line to update button press count
   }
   noTone(BUZZER_PIN);
   ringBlinkRed();
@@ -105,7 +106,7 @@ void distressedMicrowave() {
   }
 }
 
-void tenseMicrowave() {
+bool tenseMicrowave() {
   const int servoIntermediateAngle = 10;
   int colorIndex = 0;
   const uint32_t colors[] = {
@@ -131,6 +132,9 @@ void tenseMicrowave() {
 
       while (millis() - previousMillis < pixelDelay) {
         updateButtonPressCount();
+        if (buttonPressCount > 0)  {
+        return false;
+      }
       }
       previousMillis = millis();
     }
@@ -157,7 +161,7 @@ void tenseMicrowave() {
   }
 }
 
-void calmerMicrowave() {
+bool calmerMicrowave() {
   noTone(BUZZER_PIN);  // Buzzer is silent
 
   // Servo motor behavior
@@ -190,6 +194,9 @@ void calmerMicrowave() {
     if (currentMillis - previousMillis >= 100) {
       previousMillis = currentMillis;
       updateButtonPressCount();
+      if (buttonPressCount >= 10)  {
+        return false;
+      }
 
       // Update servo angle based on button presses
       int targetAngle = initialAngle + buttonPressCount * angleIncrease;
@@ -224,7 +231,7 @@ void happyMicrowave() {
   unsigned long ringPreviousMillis = millis();
   uint32_t currentColor = orangeColor;
 
-  while (true) { // Run indefinitely
+  while (true) {  // Run indefinitely
     unsigned long currentMillis = millis();
 
     // Buzzer behavior
@@ -244,7 +251,6 @@ void happyMicrowave() {
       neoPixelRing.setBrightness(255);
       neoPixelRing.show();
     }
-
     updateButtonPressCount();
   }
 }
