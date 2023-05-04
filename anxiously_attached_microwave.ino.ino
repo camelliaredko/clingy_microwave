@@ -18,7 +18,7 @@ int buttonPressCount = 0;
 int condClose = 0;
 const int servoMinAngle = 3;   // Servo minAngle
 const int servoMaxAngle = 150;  // Servo maxAngle
-const int servoMaxCalmAngle = 120;  // Servo maxCalmAngle
+const int servoMaxCalmAngle = 140;  // Servo maxCalmAngle
 
 Bounce button1 = Bounce();  // Instantiate a Bounce object
 
@@ -199,7 +199,7 @@ bool calmerMicrowave() {
       //targetAngle = constrain(targetAngle, servoMinAngle, servoMaxCalmAngle);
       Serial.println(targetAngle);
       servoMotor.write(targetAngle);
-      delay(50);  // Add a short delay to reduce shaking
+      delay(100);  // Add a short delay to reduce shaking
     }
   }
 }
