@@ -18,6 +18,7 @@ int buttonPressCount = 0;
 int condClose = 0;
 const int servoMinAngle = 3;   // Servo minAngle
 const int servoMaxAngle = 150;  // Servo maxAngle
+const int servoMaxCalmAngle = 120;  // Servo maxCalmAngle
 
 Bounce button1 = Bounce();  // Instantiate a Bounce object
 
@@ -51,7 +52,7 @@ void loop() {
     if (buttonPressCount == 0) {
       tenseMicrowave();
       return;  // Return from the function immediately
-    } else if (buttonPressCount > 0 && buttonPressCount < 10) {
+    } else if (buttonPressCount > 0 && buttonPressCount < 5) {
       calmerMicrowave();
       return;  // Return from the function immediately
     } else {
@@ -161,7 +162,7 @@ bool calmerMicrowave() {
 
   // Servo motor behavior
   int initialAngle = 27;
-  int angleIncrease = (servoMaxAngle - servoMinAngle) / 10;
+  int angleIncrease = (servoMaxCalmAngle - initialAngle) / 5;
 
   // NeoPixel Ring behavior
   uint32_t pinkColor = neoPixelRing.Color(255, 20, 147);
@@ -189,15 +190,16 @@ bool calmerMicrowave() {
     if (currentMillis - previousMillis >= 100) {
       previousMillis = currentMillis;
       updateButtonPressCount();
-      if (buttonPressCount >= 10) {
+      if (buttonPressCount >= 5) {
         return false;
       }
 
       // Update servo angle based on button presses
       int targetAngle = initialAngle + buttonPressCount * angleIncrease;
-      targetAngle = constrain(targetAngle, servoMinAngle, servoMaxAngle);
+      //targetAngle = constrain(targetAngle, servoMinAngle, servoMaxCalmAngle);
       Serial.println(targetAngle);
       servoMotor.write(targetAngle);
+      delay(50);  // Add a short delay to reduce shaking
     }
   }
 }
