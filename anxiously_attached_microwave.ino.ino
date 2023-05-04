@@ -49,7 +49,8 @@ void loop() {
   if (distance <= 50 || condClose == 1) {
     condClose = 1;
     if (buttonPressCount == 0) {
-      tenseMicrowave();
+      //tenseMicrowave();
+      happyMicrowave();
       return;  // Return from the function immediately
     } else if (buttonPressCount > 0 && buttonPressCount < 10) {
       calmerMicrowave();
@@ -132,9 +133,9 @@ bool tenseMicrowave() {
 
       while (millis() - previousMillis < pixelDelay) {
         updateButtonPressCount();
-        if (buttonPressCount > 0)  {
-        return false;
-      }
+        if (buttonPressCount > 0) {
+          return false;
+        }
       }
       previousMillis = millis();
     }
@@ -194,7 +195,7 @@ bool calmerMicrowave() {
     if (currentMillis - previousMillis >= 100) {
       previousMillis = currentMillis;
       updateButtonPressCount();
-      if (buttonPressCount >= 10)  {
+      if (buttonPressCount >= 10) {
         return false;
       }
 
@@ -212,13 +213,19 @@ void happyMicrowave() {
 
   // Buzzer behavior
   int melody[] = {
-    294, 220, 247, 220,  // D4, A3, B3, A3
-    294, 220, 247, 220,  // D4, A3, B3, A3
+    294, 220, 247, 220,           // D4, A3, B3, A3
+    294, 220, 247, 220, 0,           // D4, A3, B3, A3
+    220, 220, 247, 220, 0,           // A3, A3, B3, A3
+    220, 220, 247, 220, 0,           // A3, A3, B3, A3
+    294, 277, 294, 294, 277, 294  // D4, C#4, D4, D4, C#4, D4
   };
 
   int noteDurations[] = {
-    2, 8, 8, 8,  // quarter, quarter, quarter, quarter
-    2, 8, 8, 8,  // quarter, quarter, quarter, quarter
+    3, 8, 8, 8,    // dotted quarter note, eighth note, eighth note, eighth note, be silent for a quarter note
+    3, 8, 8, 8, 16,    // dotted quarter note, eighth note, eighth note, eighth note, be silent for an eighth note
+    16, 16, 8, 8, 8,  // sixteenth note, sixteenth note, eighth note, eighth note, be silent for an eighth note
+    16, 16, 8, 8, 8,  // sixteenth note, sixteenth note, eighth note, eighth note, be silent for an eighth note
+    8, 8, 8, 8, 8, 3  // eighth note, eighth note, quarter note, eighth note, quarter note, be silent for a quarter note, dotted quarter note
   };
 
   int noteIndex = 0;
